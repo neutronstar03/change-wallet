@@ -10,7 +10,6 @@ export default antfu(
     },
     ignores: [
       'dist/**',
-      'origin/**',
     ],
   },
   {
