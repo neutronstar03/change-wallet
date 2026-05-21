@@ -33,7 +33,7 @@ const injectScript = async () => {
     container.removeChild(scriptTag);
   }
   catch (error) {
-    console.error('Tres-Connect Inpage injection failed.', error);
+    console.error('Change Wallet inpage injection failed.', error);
   }
 };
 

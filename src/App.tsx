@@ -50,8 +50,8 @@ const App = () => {
     <div>
       <Box>
         <Stack spacing={2}>
-          <h1>Welcome to TresConnect</h1>
-          <p>Import wallet address and start faking it.</p>
+          <h1>Change Wallet</h1>
+          <p>Enter a wallet address to present it to the current dApp.</p>
           <TextField
             label="Address"
             inputProps={{ style: { color: 'white' } }}
@@ -64,14 +64,6 @@ const App = () => {
             {isImpersonating ? 'Stop' : 'Start'}
           </Button>
           <p className="bottom-text">Make sure MetaMask is installed before starting.</p>
-          <p className="powered-text">
-            Powered by
-            {' '}
-            <a href="https://tres.finance" target="_blank" rel="noreferrer">
-              TRES
-            </a>
-            .
-          </p>
         </Stack>
       </Box>
     </div>

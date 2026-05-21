@@ -46,15 +46,6 @@ label {
   margin-top: 10px !important;
 }
 
-.powered-text {
-  position: fixed;
-  bottom: 5px;
-}
-
-.powered-text a {
-  color: #f5ecef;
-}
-
 .Mui-disabled {
   -webkit-text-fill-color: unset !important;
 }
