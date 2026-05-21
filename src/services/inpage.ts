@@ -2,7 +2,7 @@ import type { ExtendedWindow, JsonRpcCallback, JsonRpcRequest, JsonRpcResponse }
 
 declare const window: ExtendedWindow;
 
-export const setupInpageImpersonator = () => {
+const setupInpageImpersonator = () => {
   const patchRequest = () => {
     if (window.impersonator.mockedFunctionsUndoers['request']) {
       return;
