@@ -4,11 +4,9 @@ declare const window: ExtendedWindow;
 
 // badge impersonation status
 const setBadgeImpersonationStatus = async (isImpersonating: boolean): Promise<void> => {
-  const tabId = await getActiveTabId();
   return chrome.action.setBadgeText(
     {
       text: isImpersonating ? 'ON' : '',
-      tabId,
     },
     () => {},
   );
