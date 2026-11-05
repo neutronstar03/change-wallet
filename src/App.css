@@ -1,25 +1,19 @@
-.App {
-  text-align: center;
+.text-box .MuiInputBase-input,
+.text-box .MuiInputLabel-root {
+  color: #fff;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.text-box .MuiOutlinedInput-notchedOutline,
+.text-box .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.text-box .Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #fff;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.text-box .Mui-disabled {
+  -webkit-text-fill-color: #fff;
+  opacity: 0.7;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.bottom-text {
+  margin-top: 10px;
 }
