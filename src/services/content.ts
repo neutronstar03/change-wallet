@@ -1,46 +1,33 @@
 import { getIsImpersonating, getLastUsedAddress } from '../common';
 
-const setupOnInpageScriptLoaded = async () => {
-  const [isImpersonating, lastUsedAddress] = await Promise.all([
-    getIsImpersonating(),
-    getLastUsedAddress(),
-  ]);
-
-  if (isImpersonating && lastUsedAddress) {
-    // when inpage is loaded, it sends an "impersonator-ready" event
-    // we then ask it to start impersonating the last used address
-    window.addEventListener('message', (event) => {
-      if (event.data.type && event.data.type == 'impersonator-ready') {
-        console.log('Page script received: ', event.data);
-        window.postMessage({
-          type: 'impersonator-start',
-          address: lastUsedAddress,
-          triggerAccountsChanged: false,
-        });
-      }
-    });
+// Register synchronously: the provider can be ready before storage finishes reading.
+window.addEventListener('message', async (event) => {
+  if (event.source !== window || !event.data || event.data.type !== 'impersonator-ready') {
+    return;
   }
-};
-
-const injectScript = async () => {
-  try {
-    const container = document.head || document.documentElement;
-    const scriptTag = document.createElement('script');
-    scriptTag.setAttribute('async', 'false');
-    const url = chrome.runtime.getURL('static/js/inpage.js');
-    scriptTag.setAttribute('src', url);
-    container.insertBefore(scriptTag, container.children[0]);
-    container.removeChild(scriptTag);
+  const [enabled, address] = await Promise.all([getIsImpersonating(), getLastUsedAddress()]);
+  if (enabled && address) {
+    window.postMessage({ type: 'impersonator-start', address }, '*');
   }
-  catch (error) {
-    console.error('Change Wallet inpage injection failed.', error);
+});
+
+const inject = () => {
+  const container = document.head || document.documentElement;
+  if (!container) {
+    return false;
   }
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL('static/js/inpage.js');
+  script.async = false;
+  script.onload = script.onerror = () => script.remove();
+  container.prepend(script);
+  return true;
 };
-
-const main = async () => {
-  await setupOnInpageScriptLoaded();
-  await injectScript();
-  console.log('content script loaded');
-};
-
-main();
+if (!inject()) {
+  const observer = new MutationObserver(() => {
+    if (inject()) {
+      observer.disconnect();
+    }
+  });
+  observer.observe(document, { childList: true, subtree: true });
+}

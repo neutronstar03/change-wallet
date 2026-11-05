@@ -13,6 +13,8 @@ import {
 
 const App = () => {
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [address, setAddress] = useState<string>('');
 
   const loadAndSetImpersonationAddress = useCallback(async () => {
@@ -30,19 +32,26 @@ const App = () => {
 
   // on mount
   useEffect(() => {
-    loadAndSetImpersonationAddress().catch(console.error);
+    loadAndSetImpersonationAddress().catch(error => setError(String(error.message ?? error)));
   }, []);
 
-  const handleClick = () => {
-    if (isImpersonating) {
-      stopImpersonation().then(() => {
-        setIsImpersonating(false);
-      });
+  const handleClick = async () => {
+    setError('');
+    setBusy(true);
+    try {
+      if (isImpersonating) {
+        await stopImpersonation();
+      }
+      else {
+        await startImpersonation(address.trim());
+      }
+      setIsImpersonating(!isImpersonating);
     }
-    else {
-      startImpersonation(address).then(() => {
-        setIsImpersonating(true);
-      });
+    catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
+    }
+    finally {
+      setBusy(false);
     }
   };
 
@@ -60,10 +69,11 @@ const App = () => {
             value={address}
             onChange={e => setAddress(e.target.value)}
           />
-          <Button variant="contained" onClick={handleClick}>
+          <Button variant="contained" disabled={busy} onClick={handleClick}>
             {isImpersonating ? 'Stop' : 'Start'}
           </Button>
-          <p className="bottom-text">Make sure MetaMask is installed before starting.</p>
+          <p role="alert">{error}</p>
+          <p className="bottom-text">Connect your existing wallet first. Signing and transactions still use that wallet.</p>
         </Stack>
       </Box>
     </div>

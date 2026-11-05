@@ -1,4 +1,5 @@
 import type { ExtendedWindow } from './types';
+import { isWalletAddress } from './provider';
 
 declare const window: ExtendedWindow;
 
@@ -25,7 +26,7 @@ export const getIsImpersonating = async (): Promise<boolean> => {
 };
 
 export const setIsImpersonating = async (status: boolean): Promise<void> => {
-  setBadgeImpersonationStatus(status);
+  await setBadgeImpersonationStatus(status);
   return chrome.storage.local.set({ isImpersonating: status });
 };
 
@@ -41,39 +42,51 @@ export const setLastUsedAddress = async (address: string): Promise<void> => {
 
 // active tab ids
 export const getActiveTabId = async (): Promise<number> => {
-  return (await chrome.tabs.query({ active: true, currentWindow: true }))[0].id || 0;
+  const tabId = (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+  if (tabId === undefined) {
+    throw new Error('No active tab is available.');
+  }
+  return tabId;
 };
 
 // start/stop impersonation
-export const startImpersonation = async (
-  address: string,
-): Promise<chrome.scripting.InjectionResult<void>[]> => {
-  setIsImpersonating(true);
-  setLastUsedAddress(address);
-  return chrome.scripting.executeScript({
-    func: (address) => {
-      window.impersonator?.startImpersonation(address, true);
+export const startImpersonation = async (address: string): Promise<void> => {
+  if (!isWalletAddress(address)) {
+    throw new Error('Enter a valid 0x wallet address.');
+  }
+  const [result] = await chrome.scripting.executeScript({
+    func: (address: string) => {
+      try {
+        if (!window.impersonator) {
+          return 'Change Wallet is unavailable on this page. Reload the dApp.';
+        }
+        window.impersonator.startImpersonation(address, true);
+        return null;
+      }
+      catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
     },
     args: [address],
-    target: {
-      tabId: await getActiveTabId(),
-    },
+    target: { tabId: await getActiveTabId() },
     world: 'MAIN',
   });
+  if (!result || result.result) {
+    throw new Error(result?.result ?? 'Unable to access this page.');
+  }
+  await setLastUsedAddress(address);
+  await setIsImpersonating(true);
 };
 
-export const stopImpersonation = async (): Promise<chrome.scripting.InjectionResult<void>[]> => {
-  setIsImpersonating(false);
-  return chrome.scripting.executeScript({
+export const stopImpersonation = async (): Promise<void> => {
+  await chrome.scripting.executeScript({
     func: () => {
       window.impersonator?.stopImpersonation();
     },
-    args: [],
-    target: {
-      tabId: await getActiveTabId(),
-    },
+    target: { tabId: await getActiveTabId() },
     world: 'MAIN',
   });
+  await setIsImpersonating(false);
 };
 
 export const getImpersonationAddress = async (): Promise<string | undefined> => {
@@ -88,7 +101,7 @@ export const getImpersonationAddress = async (): Promise<string | undefined> => 
     world: 'MAIN',
   });
 
-  setIsImpersonating(!!address);
+  await setIsImpersonating(!!address);
 
   return address;
 };
