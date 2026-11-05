@@ -6,7 +6,11 @@
     "build": "bun run tooling/build.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "bunx tsc --noEmit"
+    "typecheck": "bunx tsc --noEmit",
+    "watch": "bun run tooling/build.ts --watch",
+    "clean": "bun run tooling/clean.ts",
+    "test": "bun test",
+    "check": "bun run lint && bun run typecheck && bun test && bun run build"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

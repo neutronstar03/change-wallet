@@ -1,3 +1,4 @@
+import { watch } from 'node:fs';
 import { cp, mkdir, readdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -43,7 +44,7 @@ const buildEntrypoint = async (name: string, entrypoint: string) => {
     for (const log of result.logs) {
       console.error(log);
     }
-    process.exit(1);
+    throw new Error(`Build failed: ${name}`);
   }
 
   await moveOutputs(tempDir);
@@ -62,7 +63,30 @@ const main = async () => {
   }
 };
 
-main().catch((error) => {
+const reportError = (error: unknown) => {
   console.error(error);
-  process.exit(1);
-});
+};
+
+await main();
+if (process.argv.includes('--watch')) {
+  let pending = false;
+  let building = false;
+  const rebuild = async () => {
+    pending = true;
+    if (building) {
+      return;
+    }
+    building = true;
+    while (pending) {
+      pending = false;
+      await main().then(() => console.log('Built dist/')).catch(reportError);
+    }
+    building = false;
+  };
+  for (const directory of ['src', 'public']) {
+    watch(path.join(root, directory), { recursive: true }, () => {
+      void rebuild();
+    });
+  }
+  console.log('Watching src/ and public/. Reload the extension after each build.');
+}
